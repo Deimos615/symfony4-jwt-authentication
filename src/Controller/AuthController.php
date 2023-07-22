@@ -48,12 +48,15 @@ class AuthController extends AbstractController
     {
         $email = $request->request->get('email');
         $is_exist = $this->userRepository->findOneBy(['email' => $email]);
+        // confirm if email exist
         if (!!$is_exist) {
             return $this->json([
                 'success' => false,
                 'msg' => 'Email already Exist!',
             ]);
         }
+        /*photos upload
+        uploaded photo key must be like photo1, photo2, photo3, photo4*/
         $user = new User();
         $photo1 = $request->files->get('photo1');
         $photo2 = $request->files->get('photo2');
@@ -66,7 +69,7 @@ class AuthController extends AbstractController
                 $this->getParameter('photos_directory'),
                 $photoName1
             );
-            $awsS3Uploader->uploadUserPhoto($photo1, $photoName1);
+            $awsS3Uploader->uploadUserPhoto($photo1, $photoName1); // upload photo to AWS
             $photo_1->setName($photo1->getClientOriginalName());
             $photo_1->setUrl($photoName1);
             $this->photoRepository->add($photo_1);
@@ -128,6 +131,7 @@ class AuthController extends AbstractController
         $user->setLastName($lastName);
         $user->setFullName();
         $user->setPassword($hashedPassword);
+        // add photos to user
         $user->addPhoto($photo_1);
         $user->addPhoto($photo_2);
         $user->addPhoto($photo_3);
@@ -136,7 +140,7 @@ class AuthController extends AbstractController
         return $this->json([
             'success' => true,
             'msg' => 'User registration success!',
-            'user' => $user
+            'user' => $user // App\Entity\User
         ]);
     }
 
@@ -148,16 +152,18 @@ class AuthController extends AbstractController
         $email = $request->request->get('email');
         $password = $request->request->get('password');
         $user = $this->userRepository->findOneBy(['email' => $email]);
+        // verify user and password
         if (!$user) {
             return $this->json(['success' => false, 'msg' => 'Invalid credentials']);
         } else if (!$this->userPasswordEncoder->isPasswordValid($user, $password)) {
             return $this->json(['success' => false, 'msg' => 'Password Incorrect!']);
         }
 
-//        $this->security->setUser($user);
         // Generate the JWT token
         $token = $this->JWTTokenManager->create($user);
+        // login handler
         $this->guardAuthenticatorHandler->authenticateUserAndHandleSuccess($user, $request, $this->tokenAuthenticator, 'main');
+        // update user by api_token
         $user->setApiToken($token);
         $this->userRepository->add($user);
         return $this->json([
@@ -172,6 +178,7 @@ class AuthController extends AbstractController
      */
     public function myInfo(): Response
     {
+        // get user by authorization
         $user = $this->getUser();
         if ($user) {
             return $this->json([
@@ -185,8 +192,6 @@ class AuthController extends AbstractController
                 'msg' => 'There isn`t authorization user.'
             ]);
         }
-//        $user = $this->security->getUser();
-
     }
 
     /**
