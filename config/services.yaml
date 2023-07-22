@@ -4,12 +4,28 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
-
+    avatar_directory: '%kernel.project_dir%/public/uploads/avatar'
+    photos_directory: '%kernel.project_dir%/public/uploads/photos'
+    default_avatar: 'default.png'
+    aws_access_key_id: 'AKIA4TBHNXI5MRHQA5BI'
+    aws_secret_access_key: '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'
+    aws_region: 'eu-west-1'
 services:
+    Aws\S3\S3Client:
+        factory: [ 'Aws\S3\S3Client', 'factory' ]
+        arguments:
+            - version: latest
+              region: '%aws_region%'
+              credentials:
+                  key: '%aws_access_key_id%'
+                  secret: '%aws_secret_access_key%'
+    App\Service\AwsS3Uploader:
+        arguments:
+            $bucketName: '%aws_s3_bucket_name%'
     # default configuration for services in *this* file
-    _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
-        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+#    _defaults:
+#        autowire: true      # Automatically injects dependencies in your services.
+#        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -25,6 +41,9 @@ services:
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
+    App\Service\JwtTokenGenerator:
+        arguments:
+            $secretKey: '%env(APP_SECRET)%'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -1,0 +1,20 @@
+parameters:
+  aws_access_key_id: 'AKIA4TBHNXI5MRHQA5BI'
+  aws_secret_access_key: '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'
+  aws_region: 'eu-west-1'
+  aws_s3_bucket_name: 'cw-recruitment-tests' # Set the bucket name here
+
+services:
+  Aws\S3\S3Client:
+    factory: ['Aws\S3\S3Client', 'factory']
+    arguments:
+      -
+        version: latest
+        region: '%aws_region%'
+        credentials:
+          key: '%aws_access_key_id%'
+          secret: '%aws_secret_access_key%'
+
+  App\Service\AwsS3Uploader:
+    arguments:
+      $bucketName: '%aws_s3_bucket_name%'
